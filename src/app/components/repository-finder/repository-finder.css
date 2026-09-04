@@ -75,10 +75,3 @@
 .refresh-button:hover {
   background-color: #333;
 }
-
-/* STELLE E FORKS SULLA STESSA LINEA */
-.repository-stats {
-  display: flex;
-  gap: 12px;
-  white-space: nowrap;
-}
