@@ -1,0 +1,21 @@
+<!-- CARD DEL REPOSITORY -->
+<article class="repository-card">
+  <!-- Nome del repository -->
+  <h2>{{ repository().name }}</h2>
+
+  <!-- Descrizione del repository -->
+  <p class="description">
+    {{ repository().description || 'No description available.' }}
+  </p>
+
+  <!-- INFORMAZIONI DEL REPOSITORY -->
+  <div class="repository-info">
+    <span>Language: {{ repository().language || 'Unknown' }}</span>
+    <span>⭐ {{ repository().stargazers_count }}</span>
+    <span>Forks: {{ repository().forks_count }}</span>
+    <span>Open issues: {{ repository().open_issues_count }}</span>
+  </div>
+
+  <!-- Link al repository GitHub -->
+  <a [href]="repository().html_url" target="_blank"> View repository </a>
+</article>
