@@ -1,0 +1,42 @@
+[
+  {
+    "title": "JavaScript",
+    "value": "JavaScript"
+  },
+  {
+    "title": "TypeScript",
+    "value": "TypeScript"
+  },
+  {
+    "title": "Python",
+    "value": "Python"
+  },
+  {
+    "title": "Java",
+    "value": "Java"
+  },
+  {
+    "title": "C#",
+    "value": "C#"
+  },
+  {
+    "title": "C++",
+    "value": "C++"
+  },
+  {
+    "title": "PHP",
+    "value": "PHP"
+  },
+  {
+    "title": "Ruby",
+    "value": "Ruby"
+  },
+  {
+    "title": "Go",
+    "value": "Go"
+  },
+  {
+    "title": "Swift",
+    "value": "Swift"
+  }
+]
