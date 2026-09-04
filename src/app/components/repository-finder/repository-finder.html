@@ -1,0 +1,47 @@
+<!-- CONTENITORE PRINCIPALE -->
+<div class="finder-container">
+  <h1>GitHub Random Repository Finder</h1>
+
+  <!-- SELEZIONE DEL LINGUAGGIO -->
+  <label for="language">Programming language</label>
+
+  <select id="language" (change)="onLanguageChange($event)">
+    <option value="">Select a language</option>
+
+    @for (language of languages(); track language.value) {
+      <option [value]="language.value">
+        {{ language.title }}
+      </option>
+    }
+  </select>
+
+  <!-- STATO INIZIALE -->
+  @if (selectedLanguage() === '' && !isLoading() && !hasError() && repository() === null) {
+    <div class="state-message">
+      <p>Please select a programming language.</p>
+    </div>
+  }
+
+  <!-- STATO DI CARICAMENTO INIZIALE -->
+  @if (isLoading() && repository() === null) {
+    <div class="state-message">
+      <p>Loading repository...</p>
+    </div>
+  }
+
+  <!-- STATO DI ERRORE -->
+  @if (hasError()) {
+    <div class="error-message">
+      <p>Something went wrong.</p>
+      <button type="button" (click)="retry()">Click to retry</button>
+    </div>
+  }
+
+  <!-- STATO DI SUCCESSO -->
+  @if (repository() !== null && !hasError()) {
+    <app-repository-card [repository]="repository()!"></app-repository-card>
+    <button type="button" class="refresh-button" (click)="refresh()" [disabled]="isLoading()">
+      Refresh
+    </button>
+  }
+</div>
