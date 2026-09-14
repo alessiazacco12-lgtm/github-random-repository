@@ -5,7 +5,7 @@
   <!-- SELEZIONE DEL LINGUAGGIO -->
   <label for="language">Programming language</label>
 
-  <select id="language" (change)="onLanguageChange($event)">
+  <select id="language" [formControl]="languageControl">
     <option value="">Select a language</option>
 
     @for (language of languages(); track language.value) {
@@ -16,7 +16,7 @@
   </select>
 
   <!-- STATO INIZIALE -->
-  @if (selectedLanguage() === '' && !isLoading() && !hasError() && repository() === null) {
+  @if (languageControl.value === '' && !isLoading() && !hasError() && repository() === null) {
     <div class="state-message">
       <p>Please select a programming language.</p>
     </div>
