@@ -1,4 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GithubService } from '../../services/github.service';
 import { Language } from '../../models/language.model';
 import { Repository } from '../../models/repository.model';
@@ -6,7 +8,7 @@ import { RepositoryCard } from '../repository-card/repository-card';
 
 @Component({
   selector: 'app-repository-finder',
-  imports: [RepositoryCard],
+  imports: [RepositoryCard, ReactiveFormsModule],
   templateUrl: './repository-finder.html',
   styleUrl: './repository-finder.css',
 })
@@ -14,11 +16,11 @@ export class RepositoryFinder {
   // Recupero il service che gestisce le chiamate alla GitHub API.
   private githubService = inject(GithubService);
 
+  // Controllo del form per il linguaggio selezionato.
+  languageControl = new FormControl('', { nonNullable: true }); // Il valore del controllo sarà sempre una string e non potrà diventare null.
+
   // Elenco dei linguaggi disponibili nel menu a tendina.
   languages = signal<Language[]>([]);
-
-  // Linguaggio che viene selezionato dall'utente.
-  selectedLanguage = signal('');
 
   // Repository casuale trovato.
   repository = signal<Repository | null>(null);
@@ -30,8 +32,12 @@ export class RepositoryFinder {
   hasError = signal(false);
 
   constructor() {
-    // Recupero i linguaggi quando viene creato il componente e poi recupero l'elenco dei linguaggi dal file JSON.
+    // Recupero l'elenco dei linguaggi.
     this.loadLanguages();
+    // Quando cambia i l valore della select aggiorno il linguaggio selezionato.
+    this.languageControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((language) => {
+      this.selectLanguage(language);
+    });
   }
   loadLanguages() {
     this.githubService.getLanguages().subscribe({
@@ -45,16 +51,8 @@ export class RepositoryFinder {
     });
   }
 
-  // Leggo il valore del linguaggio selezionato.
-  onLanguageChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.selectLanguage(select.value);
-  }
-
   // Aggiorno il linguaggio selezionato.
   selectLanguage(language: string) {
-    this.selectedLanguage.set(language);
-
     // Resetto i dati precedenti.
     this.repository.set(null);
     this.hasError.set(false);
@@ -68,9 +66,9 @@ export class RepositoryFinder {
     this.loadRepository();
   }
 
-  // Recupero i repository del linguaggio selezionato.
   loadRepository() {
-    const language = this.selectedLanguage();
+    // Recupero il linguaggio selezionato dal FormControl.
+    const language = this.languageControl.value;
 
     // Se non è stato scelto un linguaggio non effettuo la ricerca.
     if (language === '') {
@@ -107,7 +105,7 @@ export class RepositoryFinder {
 
   // Riprovo l'operazione che ha generato l'errore.
   retry() {
-    if (this.selectedLanguage() === '') {
+    if (this.languageControl.value === '') {
       this.loadLanguages();
     } else {
       this.loadRepository();
