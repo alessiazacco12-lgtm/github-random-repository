@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GithubService } from '../../services/github.service';
 import { Language } from '../../models/language.model';
 import { Repository } from '../../models/repository.model';
@@ -34,8 +34,8 @@ export class RepositoryFinder {
   constructor() {
     // Recupero l'elenco dei linguaggi.
     this.loadLanguages();
-    // Quando cambia il valore della select aggiorno il linguaggio selezionato.
-    this.languageControl.valueChanges.subscribe((language) => {
+    // Quando cambia i l valore della select aggiorno il linguaggio selezionato.
+    this.languageControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((language) => {
       this.selectLanguage(language);
     });
   }
