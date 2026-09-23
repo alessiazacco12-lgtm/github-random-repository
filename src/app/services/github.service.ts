@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Language } from '../models/language.model';
 import { RepositorySearchResponse } from '../models/repository.model';
@@ -21,10 +21,12 @@ export class GithubService {
     return this.http.get<Language[]>(this.languagesUrl);
   }
 
-  // Cerco i repository in base al linguaggio selezionato.
+  // Il metodo prende il linguaggio selezionato, crea i parametri della ricerca e invia una richiesta GET alla GitHub API per ottenere i repository corrispondenti.
   searchRepositories(language: string) {
-    return this.http.get<RepositorySearchResponse>(
-      `${this.apiUrl}?q=language:${encodeURIComponent(language)}&per_page=100`,
-    );
+    const params = new HttpParams()
+      .set('q', `language:${language}`)
+      // Richiedo fino a 100 repository per pag.
+      .set('per_page', '100');
+    return this.http.get<RepositorySearchResponse>(this.apiUrl, { params });
   }
 }
