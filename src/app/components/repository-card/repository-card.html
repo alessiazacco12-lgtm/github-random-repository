@@ -1,21 +1,24 @@
+<!-- Creo una variabile locale per usare il repository nel template evitando di richiamare il repository() più volte.  -->
+@let currentRepository = repository();
+
 <!-- CARD DEL REPOSITORY -->
 <article class="repository-card">
   <!-- Nome del repository -->
-  <h2>{{ repository().name }}</h2>
+  <h2>{{ currentRepository.name }}</h2>
 
   <!-- Descrizione del repository -->
   <p class="description">
-    {{ repository().description || 'No description available.' }}
+    {{ currentRepository.description || 'No description available.' }}
   </p>
 
   <!-- INFORMAZIONI DEL REPOSITORY -->
   <div class="repository-info">
-    <span>Language: {{ repository().language || 'Unknown' }}</span>
-    <span>⭐ {{ repository().stargazers_count }}</span>
-    <span>Forks: {{ repository().forks_count }}</span>
-    <span>Open issues: {{ repository().open_issues_count }}</span>
+    <span>Language: {{ currentRepository.language || 'Unknown' }}</span>
+    <span>⭐ {{ currentRepository.stargazers_count }}</span>
+    <span>Forks: {{ currentRepository.forks_count }}</span>
+    <span>Open issues: {{ currentRepository.open_issues_count }}</span>
   </div>
 
   <!-- Link al repository GitHub -->
-  <a [href]="repository().html_url" target="_blank"> View repository </a>
+  <a [href]="currentRepository.html_url" target="_blank"> View repository </a>
 </article>
