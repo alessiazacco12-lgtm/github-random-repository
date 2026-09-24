@@ -8,22 +8,27 @@
   <select id="language" [formControl]="languageControl">
     <option value="">Select a language</option>
 
-    @for (language of languages(); track language.value) {
-      <option [value]="language.value">
-        {{ language.title }}
-      </option>
+    @if (languagesResource.hasValue()) {
+      @for (language of languagesResource.value(); track language.value) {
+        <option [value]="language.value">
+          {{ language.title }}
+        </option>
+      }
     }
   </select>
 
+  <!-- Salvo il repository corrente in una variabile locale del template -->
+  @let currentRepository = repository();
+
   <!-- STATO INIZIALE -->
-  @if (languageControl.value === '' && !isLoading() && !hasError() && repository() === null) {
+  @if (selectedLanguage() === '' && !languagesResource.isLoading() && !hasError()) {
     <div class="state-message">
       <p>Please select a programming language.</p>
     </div>
   }
 
-  <!-- STATO DI CARICAMENTO INIZIALE -->
-  @if (isLoading() && repository() === null) {
+  <!-- STATO DI CARICAMENTO -->
+  @if (selectedLanguage() !== '' && repositoryResource.isLoading() && currentRepository === null) {
     <div class="state-message">
       <p>Loading repository...</p>
     </div>
@@ -38,9 +43,15 @@
   }
 
   <!-- STATO DI SUCCESSO -->
-  @if (repository() !== null && !hasError()) {
-    <app-repository-card [repository]="repository()!"></app-repository-card>
-    <button type="button" class="refresh-button" (click)="refresh()" [disabled]="isLoading()">
+  @if (currentRepository !== null && !hasError()) {
+    <app-repository-card [repository]="currentRepository"></app-repository-card>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="refresh()"
+      [disabled]="repositoryResource.isLoading()"
+    >
       Refresh
     </button>
   }

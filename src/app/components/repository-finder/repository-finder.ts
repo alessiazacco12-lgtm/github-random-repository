@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { HttpParams, httpResource } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { GithubService } from '../../services/github.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Language } from '../../models/language.model';
-import { Repository } from '../../models/repository.model';
+import { Repository, RepositorySearchResponse } from '../../models/repository.model';
 import { RepositoryCard } from '../repository-card/repository-card';
 
 @Component({
@@ -13,109 +14,77 @@ import { RepositoryCard } from '../repository-card/repository-card';
   styleUrl: './repository-finder.css',
 })
 export class RepositoryFinder {
-  // Recupero il service che gestisce le chiamate alla GitHub API.
-  private githubService = inject(GithubService);
-
   // Controllo del form per il linguaggio selezionato.
-  languageControl = new FormControl('', { nonNullable: true }); // Il valore del controllo sarà sempre una string e non potrà diventare null.
+  languageControl = new FormControl('', { nonNullable: true });
 
-  // Elenco dei linguaggi disponibili nel menu a tendina.
-  languages = signal<Language[]>([]);
+  // Trasformo il valore del FormControl in un Signal.
+  selectedLanguage = toSignal(this.languageControl.valueChanges, {
+    initialValue: this.languageControl.value,
+  });
 
-  // Repository casuale trovato.
-  repository = signal<Repository | null>(null);
+  // Recupero l'elenco dei linguaggi tramite httpResource.
+  languagesResource = httpResource<Language[]>(() => '/data/languages.json', {
+    defaultValue: [],
+  });
 
-  // Stato di loading.
-  isLoading = signal(false);
+  // Recupero i repository in base al linguaggio selezionato.
+  repositoryResource = httpResource<RepositorySearchResponse>(() => {
+    const language = this.selectedLanguage();
 
-  // Stato di error.
-  hasError = signal(false);
-
-  constructor() {
-    // Recupero l'elenco dei linguaggi.
-    this.loadLanguages();
-    // Quando cambia i l valore della select aggiorno il linguaggio selezionato.
-    this.languageControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((language) => {
-      this.selectLanguage(language);
-    });
-  }
-  loadLanguages() {
-    this.githubService.getLanguages().subscribe({
-      next: (languages) => {
-        this.languages.set(languages);
-      },
-
-      error: () => {
-        this.hasError.set(true);
-      },
-    });
-  }
-
-  // Aggiorno il linguaggio selezionato.
-  selectLanguage(language: string) {
-    // Resetto i dati precedenti.
-    this.repository.set(null);
-    this.hasError.set(false);
-
-    // Se non è stato selezionato nessun linguaggio torno allo stato iniziale.
+    // Se non è stato selezionato un linguaggio non effettuo la richiesta.
     if (language === '') {
-      return;
+      return undefined;
     }
 
-    // Cerco un repository del linguaggio scelto.
-    this.loadRepository();
-  }
+    const params = new HttpParams().set('q', `language:${language}`).set('per_page', '100');
 
-  loadRepository() {
-    // Recupero il linguaggio selezionato dal FormControl.
-    const language = this.languageControl.value;
+    return {
+      url: 'https://api.github.com/search/repositories',
+      params,
+    };
+  });
 
-    // Se non è stato scelto un linguaggio non effettuo la ricerca.
-    if (language === '') {
-      return;
+  // Repository casuale ricavato dalla risposta della Resource.
+  repository = computed<Repository | null>(() => {
+    if (!this.repositoryResource.hasValue()) {
+      return null;
     }
 
-    // Mostro lo stato di caricamento.
-    this.isLoading.set(true);
-    this.hasError.set(false);
-    this.githubService.searchRepositories(language).subscribe({
-      next: (response) => {
-        // Se non vengono trovati repository mostro lo stato di errore.
-        if (response.items.length === 0) {
-          this.hasError.set(true);
-          this.isLoading.set(false);
-          return;
-        }
+    const repositories = this.repositoryResource.value().items;
 
-        // Scelgo un repository casuale tra quelli ricevuti e lo salvo.
-        const randomIndex = Math.floor(Math.random() * response.items.length);
-        this.repository.set(response.items[randomIndex]);
+    if (repositories.length === 0) {
+      return null;
+    }
 
-        // Termino il caricamento.
-        this.isLoading.set(false);
-      },
+    const randomIndex = Math.floor(Math.random() * repositories.length);
 
-      error: () => {
-        // In caso di errore mostro lo stato error.
-        this.hasError.set(true);
-        this.isLoading.set(false);
-      },
-    });
-  }
+    return repositories[randomIndex];
+  });
+
+  // Stato di errore.
+  hasError = computed(() => {
+    if (this.languagesResource.error() || this.repositoryResource.error()) {
+      return true;
+    }
+
+    if (this.selectedLanguage() === '' || !this.repositoryResource.hasValue()) {
+      return false;
+    }
+
+    return this.repositoryResource.value().items.length === 0;
+  });
 
   // Riprovo l'operazione che ha generato l'errore.
   retry() {
-    if (this.languageControl.value === '') {
-      this.loadLanguages();
+    if (this.selectedLanguage() === '') {
+      this.languagesResource.reload();
     } else {
-      this.loadRepository();
+      this.repositoryResource.reload();
     }
   }
-  // Carico un altro repository casuale dello stesso linguaggio.
+
+  // Carico nuovamente i repository dello stessno linguaggio.
   refresh() {
-    this.loadRepository();
+    this.repositoryResource.reload();
   }
 }
-
-// Brevemente: Esempio: Imposto come Programming Language "Ruby" e mi spuntano: homebrew-core,dawarich, geocoder.
-// Ruby è il linguaggio mentre homebrew-core è il repository di GitHub.
